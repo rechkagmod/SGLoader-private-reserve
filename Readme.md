@@ -11,3 +11,4 @@ Space Station 14 launcher with client-side modding/patching support.
 ![# badge](Assets/README/works-on-selfmerging.svg)
 
 ПОДДЕРЖКА СУКА ЛИНУКСА
+Установка: Распаковать релиз(!), не сурсы. Открыть Marseyloader.exe, патчи в Marsey/Mods. Патчи кодить самому либо у других просить, не ебу
