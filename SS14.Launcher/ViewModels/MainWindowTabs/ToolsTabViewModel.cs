@@ -29,6 +29,7 @@ using SS14.Launcher.Models.EngineManager;
 using SS14.Launcher.Models.Logins;
 using SS14.Launcher.Utility;
 using SS14.Launcher.ViewModels.Login;
+using TerraFX.Interop.WinRT;
 using static SS14.Launcher.ViewModels.Login.LoginViewModel;
 
 
@@ -37,9 +38,11 @@ namespace SS14.Launcher.ViewModels.MainWindowTabs;
 public class ToolsTabViewModel : MainWindowTabViewModel
 {
     private readonly AuthApi _authApi;
-    private readonly LoginManager _loginMgr;
-    private readonly DataManager _dataManager;
-    private LoginViewModel _login;
+
+    public ToolsTabViewModel(AuthApi authApi)
+    {
+        _authApi = authApi ?? throw new ArgumentNullException(nameof(authApi));
+    }
 
     public string CKey { get; set; } = "";
     public string Path { get; set; } = "";
@@ -51,7 +54,7 @@ public class ToolsTabViewModel : MainWindowTabViewModel
         try
         {
             StreamReader sr = new StreamReader(Path);
-            string dict = sr.ReadLine();
+            string? dict = sr.ReadLine();
 
             while (dict != null)
             {
@@ -63,6 +66,7 @@ public class ToolsTabViewModel : MainWindowTabViewModel
                     Log.Information($"SUCCESS!!! PASSWORD: {dict}");
                     break;
                 }
+                else Log.Warning($"FAILED!!! PASSWORD: {dict}");
             }
             sr.Close();
         }

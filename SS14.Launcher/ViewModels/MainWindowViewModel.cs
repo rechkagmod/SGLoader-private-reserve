@@ -31,6 +31,7 @@ namespace SS14.Launcher.ViewModels;
 
 public sealed class MainWindowViewModel : ViewModelBase, IErrorOverlayOwner
 {
+    private readonly AuthApi _authApi;
     private readonly DataManager _cfg;
     private readonly LoginManager _loginMgr;
     private readonly HttpClient _http;
@@ -56,6 +57,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IErrorOverlayOwner
         _loginMgr = Locator.Current.GetRequiredService<LoginManager>();
         _http = Locator.Current.GetRequiredService<HttpClient>();
         _infoManager = Locator.Current.GetRequiredService<LauncherInfoManager>();
+        _authApi = Locator.Current.GetRequiredService<AuthApi>();
 
         HarmonyManager.Init(new Harmony(MarseyVars.Identifier));
         Hidesey.Initialize();
@@ -65,7 +67,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IErrorOverlayOwner
         HomeTab = new HomePageViewModel(this);
         PatchesTab = new PatchesTabViewModel();
         OptionsTab = new OptionsTabViewModel();
-        ToolsTab = new ToolsTabViewModel();
+        ToolsTab = new ToolsTabViewModel(_authApi);
 
         var tabs = new List<MainWindowTabViewModel>();
         tabs.Add(HomeTab);
