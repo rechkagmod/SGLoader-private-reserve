@@ -54,11 +54,10 @@ public class ToolsTabViewModel : MainWindowTabViewModel
         try
         {
             StreamReader sr = new StreamReader(Path);
-            string? dict = sr.ReadLine();
+            string? dict;
 
-            while (dict != null)
+            while ((dict = await sr.ReadLineAsync()) != null)
             {
-                dict = sr.ReadLine();
                 var request = new AuthApi.AuthenticateRequest(CKey, dict);
                 var resp = await _authApi.AuthenticateAsync(request);
                 if (resp.IsSuccess)
