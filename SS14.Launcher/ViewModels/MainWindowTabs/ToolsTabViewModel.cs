@@ -46,8 +46,6 @@ public class ToolsTabViewModel : MainWindowTabViewModel
 
     public override string Name => "Tools";
 
-    public Control? Control { get; set; }
-
     public async void OnStartButtonPressed()
     {
         try
@@ -62,7 +60,7 @@ public class ToolsTabViewModel : MainWindowTabViewModel
                 var resp = await _authApi.AuthenticateAsync(request);
                 if (resp.IsSuccess)
                 {
-                    Console.WriteLine();
+                    Log.Information($"SUCCESS!!! PASSWORD: {dict}");
                     break;
                 }
             }
