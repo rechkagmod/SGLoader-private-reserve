@@ -1,4 +1,5 @@
-![# hacker anonimus](Assets/info-icons/image.png)
+![image](https://github.com/user-attachments/assets/59406b66-adaa-447b-aae0-b24d07573023)
+
 ## ЭТОТ ТЕКСТ НАПИСАЛ ДМИТРИЙ УТКИН
 
 
