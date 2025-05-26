@@ -1,4 +1,5 @@
-![logo-long](https://github.com/user-attachments/assets/4e7f2a40-6209-4e6c-b843-0345bbb7bb81)
+![logo-long](https://github.com/user-attachments/assets/45a5db5e-2783-4567-88de-09dced188835)
+
 
 
 ## ЭТОТ ТЕКСТ НАПИСАЛ ДМИТРИЙ УТКИН
