@@ -5,6 +5,7 @@ using Marsey.Config;
 using Marsey.Handbreak;
 using Marsey.Misc;
 using Marsey.Stealthsey;
+using Microsoft.Win32;
 
 namespace Marsey.Game.Patches;
 
@@ -30,11 +31,35 @@ public static class HWID
         if (!MarseyConf.ForceHWID)
             return;
 
+        // Delete HWID from registry if enabled
+        if (MarseyConf.AutoDeleteHWID)
+        {
+            DeleteHWIDFromRegistry();
+        }
+
         MarseyLogger.Log(MarseyLogger.LogType.INFO, "HWIDForcer", $"Trying to apply {_hwidString}");
 
         string cleanedHwid = CleanHwid(_hwidString);
         ForceHWID(cleanedHwid);
         PatchCalcMethod();
+    }
+
+    private static void DeleteHWIDFromRegistry()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Space Wizards\Robust", true);
+            if (key != null)
+            {
+                key.DeleteValue("Hwid", false);
+                key.DeleteValue("Hwid2", false);
+                MarseyLogger.Log(MarseyLogger.LogType.INFO, "HWIDForcer", "Successfully deleted HWID and HWID2 from registry");
+            }
+        }
+        catch (Exception ex)
+        {
+            MarseyLogger.Log(MarseyLogger.LogType.ERRO, "HWIDForcer", $"Failed to delete HWID from registry: {ex.Message}");
+        }
     }
 
     public static void SetHWID(string hwid)

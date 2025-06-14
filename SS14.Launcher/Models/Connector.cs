@@ -609,6 +609,7 @@ public class Connector : ReactiveObject
             { "MARSEY_PRESENCE_USERNAME", _cfg.GetCVar(CVars.RPCUsername) },
             { "MARSEY_FORCINGHWID", _cfg.GetCVar(CVars.ForcingHWId) ? "true" : null },
             { "MARSEY_FORCEDHWID", _cfg.GetCVar(CVars.ForcingHWId) ? MarseyGetHWID() : null },
+            { "MARSEY_AUTODELETE_HWID", _cfg.GetCVar(CVars.AutoDeleteHWID) ? "true" : null },
             { "MARSEY_FORKID", _forkid },
             { "MARSEY_ENGINE", _engine },
             { "MARSEY_BACKPORTS", _cfg.GetCVar(CVars.Backports) ? "true" : null },
@@ -633,11 +634,7 @@ public class Connector : ReactiveObject
     private string MarseyGetHWID()
     {
         string forcedHWID = _cfg.GetCVar(CVars.ForcedHWId);
-        if (_cfg.GetCVar(CVars.RandHWID))
-        {
-            forcedHWID = HWID.GenerateRandom();
-        }
-        else if (_cfg.GetCVar(CVars.LIHWIDBind))
+        if (_cfg.GetCVar(CVars.LIHWIDBind))
         {
             forcedHWID = _loginManager.ActiveAccount!.LoginInfo.HWID;
         }
@@ -730,7 +727,7 @@ public class Connector : ReactiveObject
             basePath = Path.GetFullPath(Path.Combine(
                 LauncherPaths.DirLauncherInstall,
                 "..", "..", "..", "..",
-                "SS14.Loader", "bin", "Debug", "net8.0"));
+                "SS14.Loader", "bin", "Debug", "net9.0"));
         }
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -746,6 +743,7 @@ public class Connector : ReactiveObject
             return new ProcessStartInfo
             {
                 FileName = Path.Combine(basePath, "SS14.Loader.exe"),
+                WorkingDirectory = basePath
             };
         }
 

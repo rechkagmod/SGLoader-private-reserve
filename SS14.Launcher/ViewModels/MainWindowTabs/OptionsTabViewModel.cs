@@ -304,12 +304,12 @@ public class OptionsTabViewModel : MainWindowTabViewModel, INotifyPropertyChange
         }
     }
 
-    public bool RandHWID
+    public bool AutoDeleteHWID
     {
-        get => Cfg.GetCVar(CVars.RandHWID);
+        get => Cfg.GetCVar(CVars.AutoDeleteHWID);
         set
         {
-            Cfg.SetCVar(CVars.RandHWID, value);
+            Cfg.SetCVar(CVars.AutoDeleteHWID, value);
             Cfg.CommitConfig();
         }
     }

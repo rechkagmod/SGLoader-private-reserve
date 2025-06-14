@@ -212,9 +212,9 @@ public static class CVars
     // HWID
 
     /// <summary>
-    /// Do we use a random HWID each time?
+    /// Do we automatically delete HWID from registry before connecting?
     /// </summary>
-    public static readonly CVarDef<bool> RandHWID = CVarDef.Create("RandHWID", false);
+    public static readonly CVarDef<bool> AutoDeleteHWID = CVarDef.Create("AutoDeleteHWID", false);
 
     /// <summary>
     /// HWId to use on servers
