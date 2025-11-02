@@ -2,12 +2,12 @@
 
 
 
-## ЭТОТ ТЕКСТ НАПИСАЛ ДМИТРИЙ УТКИН
+## ЭТОТ ТЕКСТ НАПИСАЛ ФУРРИ
 
 
 ![# Marseyloader](SS14.Launcher/Assets/logo-long.png)
 
-Space Station 14 launcher with client-side modding/patching support.
+Лаунчер для сосать слизь 14 для моддинга и кастмного UI
 
 ![# badge](Assets/README/no-stops-no-regrets.svg)
 ![# badge](Assets/README/ensuring-code-integrity.svg)
